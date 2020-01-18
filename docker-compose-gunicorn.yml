@@ -1,0 +1,37 @@
+version: '3.4'
+
+services:
+  nginx:
+    image: nginx:1.13.10-alpine
+    ports:
+      - "5000:80"
+    volumes:
+      - ./nginx/default/:/etc/nginx/conf.d
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - app
+    networks:
+      - frontend
+
+  app:
+    build: .
+    volumes:
+      - .:/usr/src/app
+      - /etc/localtime:/etc/localtime:ro
+    working_dir: "/usr/src/app"
+    command: gunicorn -w 2 -b :8000 app:app
+    restart: on-failure:5
+    networks:
+      - frontend
+      - backend
+    #env_file:
+      #- .env
+    environment:
+      - LANG=C.UTF-8
+      - APP_ENVIRONMENT=production
+
+networks:
+  frontend:
+    driver: bridge #or overlay in swarm mode
+  backend:
+    driver: bridge #or overlay in swarm mode
